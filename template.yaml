@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Micronaut Rest - Gateway API - Lambda Function
+
+Globals:
+  Function:
+    Runtime: java11
+    MemorySize: 448
+    Timeout: 15
+    Handler: io.micronaut.function.aws.proxy.MicronautLambdaHandler
+    CodeUri: build/libs/miconaut-create-app-0.1-all.jar
+
+Resources:
+  MicronautGatewayAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: "Micronaut Gateway API"
+      StageName: develop
+
+  BookLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: book-lambda-function
+      Description: Book Lambda Function
+      Policies: AWSLambdaBasicExecutionRole
+      Events:
+        BookApiProxy:
+          Type: Api
+          Properties:
+            Path: /books
+            Method: ANY
+            RestApiId:
+              Ref: MicronautGatewayAPI
+  ProductLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: product-lambda-function
+      Description: Product Lambda Function
+      Policies: AWSLambdaBasicExecutionRole
+      Events:
+        ProductApiProxy:
+          Type: Api
+          Properties:
+            Path: /products
+            Method: ANY
+            RestApiId:
+              Ref: MicronautGatewayAPI
+Outputs:
+  MicronautGatewayApi:
+    Description: URL for Micronaut Gateway Api
+    Value:
+      Fn::Sub: https://${MicronautGatewayAPI}.execute-api.${AWS::Region}.amazonaws.com/develop/
